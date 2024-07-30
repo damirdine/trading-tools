@@ -1,8 +1,12 @@
 # Trading Position Calculator 
 
-
 ##### [ 🇫🇷 FRENCH VERSION](./README_FR.md)
+
 ----
+
+Discover the online application : [Here](damirdine.github.io/trading-tools/)
+
+---
 
 This is a simple HTML application for calculating a leveraged trading position using Tailwind CSS for styling. The application allows users to input their capital, risk percentage, and leverage, and it calculates the position size and risk amount.
 
@@ -15,7 +19,7 @@ This is a simple HTML application for calculating a leveraged trading position u
 ## Usage
 
 1. **Open the Application:**
-   - Open the `index.html` file in your preferred web browser.
+   - Go to [damirdine.github.io/trading-tools](https://damirdine.github.io/trading-tools) in your preferred web browser.
 
 2. **Input Values:**
    - Enter your capital (€), risk percentage (%), and leverage in the respective input fields.

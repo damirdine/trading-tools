@@ -1,6 +1,11 @@
-# Calculateur de Position de Trading 
+# [Calculateur de Position de Trading](damirdine.github.io/trading-tools)
 
 ##### [🏴󠁧󠁢󠁥󠁮󠁧󠁿 ENGLISH VERION](./README.md)
+
+---
+
+Découvrir l'application en ligne : [ici](damirdine.github.io/trading-tools/)
+
 ---
 
 Il s'agit d'une application HTML simple pour calculer une position de trading avec effet de levier, utilisant Tailwind CSS pour le style. L'ap# Calculateur de Position de Trading
@@ -16,7 +21,7 @@ Il s'agit d'une application HTML simple pour calculer une position de trading av
 ## Utilisation
 
 1. **Ouvrir l'application :**
-   - Ouvrez le fichier `index.html` dans votre **navigateur** web préféré.
+   - Allez sur [damirdine.github.io/trading-tools](https://damirdine.github.io/trading-tools) avec votre **navigateur** web préféré.
 
 2. **Saisir les valeurs :**
    - Entrez votre capital (€), pourcentage de risque (%) et effet de levier dans les champs de saisie respectifs.
