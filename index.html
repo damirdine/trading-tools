@@ -100,6 +100,29 @@
         </div>
       </div>
     </main>
+    <script>
+      document
+        .getElementById("calculateBtn")
+        .addEventListener("click", function () {
+          const capital = parseFloat(document.getElementById("capital").value);
+          const riskPercentage = parseFloat(
+            document.getElementById("riskPercentage").value
+          );
+          const leverage = parseFloat(
+            document.getElementById("leverage").value
+          );
+
+          const riskPerTrade = capital * (riskPercentage / 100);
+          const positionSize = riskPerTrade * leverage;
+
+          document.getElementById(
+            "positionSize"
+          ).textContent = `Position Size: ${positionSize.toFixed(2)} €`;
+          document.getElementById(
+            "riskAmount"
+          ).textContent = `Risk Amount: ${riskPerTrade.toFixed(2)} €`;
+        });
+    </script>
   </body>
   <footer>
     <a
