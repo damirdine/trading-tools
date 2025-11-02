@@ -2,6 +2,71 @@ from bs4 import BeautifulSoup
 from datetime import datetime
 import os
 
+
+def parse_mt4_datetime(date_string):
+    """
+    Parse MT4 datetime string format (e.g., '2023.06.28 20:14:43')
+    
+    Args:
+        date_string: Date string in MT4 format
+        
+    Returns:
+        datetime object or None if parsing fails
+    """
+    try:
+        return datetime.strptime(date_string, '%Y.%m.%d %H:%M:%S')
+    except (ValueError, TypeError):
+        try:
+            return datetime.strptime(date_string.split()[0], '%Y.%m.%d')
+        except (ValueError, TypeError, IndexError):
+            return None
+
+
+def filter_by_date_range(transaction_data, from_date=None, to_date=None):
+    """
+    Filter transactions by date range.
+    
+    Args:
+        transaction_data: List of transaction dictionaries
+        from_date: Start date (string in format 'YYYY.MM.DD' or datetime object)
+        to_date: End date (string in format 'YYYY.MM.DD' or datetime object)
+        
+    Returns:
+        Filtered list of transactions
+    """
+    if not transaction_data or (from_date is None and to_date is None):
+        return transaction_data
+    
+    # Parse from_date
+    if isinstance(from_date, str):
+        from_date = datetime.strptime(from_date, '%Y.%m.%d')
+    
+    # Parse to_date
+    if isinstance(to_date, str):
+        to_date = datetime.strptime(to_date, '%Y.%m.%d')
+    
+    filtered_data = []
+    for transaction in transaction_data:
+        # Get the date field based on transaction type
+        date_field = transaction.get('open_time') or transaction.get('date')
+        if not date_field:
+            continue
+        
+        trans_datetime = parse_mt4_datetime(date_field)
+        if not trans_datetime:
+            continue
+        
+        # Filter by date range
+        if from_date and trans_datetime < from_date:
+            continue
+        if to_date and trans_datetime > to_date.replace(hour=23, minute=59, second=59):
+            continue
+        
+        filtered_data.append(transaction)
+    
+    return filtered_data
+
+
 def parse_trade_data(file_path):
     """
     Parse MT4 HTML export file and extract trade data including all transactions.
@@ -121,18 +186,27 @@ def parse_mt4_file(file_path):
     """
     return parse_trade_data(file_path)
 
-def extract_trade_info(trade_data):
+def extract_trade_info(trade_data, from_date=None, to_date=None):
     """
-    Extract summary information from trade data.
+    Extract summary information from trade data for a given date range.
     
     Args:
         trade_data: List of transaction dictionaries (trades and balance entries)
+        from_date: Start date (string in format 'YYYY.MM.DD' or datetime object)
+        to_date: End date (string in format 'YYYY.MM.DD' or datetime object)
         
     Returns:
         Dictionary with summary statistics including fees, PnL, deposits, and withdrawals
     """
-    if not trade_data:
+    # Filter by date range if provided
+    filtered_data = filter_by_date_range(trade_data, from_date, to_date)
+    
+    if not filtered_data:
         return {
+            'period': {
+                'from_date': str(from_date) if from_date else 'All',
+                'to_date': str(to_date) if to_date else 'All'
+            },
             'total_pnl': 0,
             'total_fees': 0,
             'total_deposits': 0,
@@ -146,8 +220,8 @@ def extract_trade_info(trade_data):
         }
     
     # Separate trades from balance transactions
-    trades = [t for t in trade_data if t.get('type') in ['buy', 'sell']]
-    balance_transactions = [t for t in trade_data if t.get('type') == 'balance']
+    trades = [t for t in filtered_data if t.get('type') in ['buy', 'sell']]
+    balance_transactions = [t for t in filtered_data if t.get('type') == 'balance']
     
     # Calculate PnL (Profit and Loss) from trades only
     total_pnl = sum(t.get('profit', 0) for t in trades)
@@ -171,6 +245,10 @@ def extract_trade_info(trade_data):
     total_fees = trade_commissions + admin_fees
     
     return {
+        'period': {
+            'from_date': str(from_date) if from_date else 'All',
+            'to_date': str(to_date) if to_date else 'All'
+        },
         'total_pnl': round(total_pnl, 2),
         'total_fees': round(total_fees, 2),
         'total_deposits': round(total_deposits, 2),
@@ -201,5 +279,17 @@ if __name__ == "__main__":
     with open("parsed_trades.json", "w", encoding="utf-8") as json_file:
         json_file.write(json_data)
     
-    summary = extract_trade_info(trades)
-    print(summary)
+    # Summary for all time
+    print("\n=== Summary: All Time ===")
+    summary_all = extract_trade_info(trades)
+    print(json.dumps(summary_all, indent=2))
+    
+    # Summary for specific date range (example)
+    print("\n=== Summary: 2024.03.01 to 2024.04.30 ===")
+    summary_range = extract_trade_info(trades, from_date='2024.03.01', to_date='2024.04.30')
+    print(json.dumps(summary_range, indent=2))
+    
+    # Summary for a single month (example)
+    print("\n=== Summary: March 2024 ===")
+    summary_march = extract_trade_info(trades, from_date='2024.03.01', to_date='2024.03.31')
+    print(json.dumps(summary_march, indent=2))
