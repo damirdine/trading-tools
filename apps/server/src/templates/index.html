@@ -278,10 +278,46 @@
                 padding: 10px;
             }
         }
+        /* Global loading overlay */
+        .loading-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(255,255,255,0.75);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.2s ease;
+            visibility: hidden;
+            opacity: 0;
+        }
+
+        .loading-overlay.visible {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .spinner {
+            width: 64px;
+            height: 64px;
+            border: 8px solid #e6e6e6;
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            box-shadow: 0 6px 24px rgba(102,126,234,0.25);
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
     <div class="container">
+        <!-- Global loading overlay (hidden by default) -->
+        <div id="globalLoading" class="loading-overlay" aria-hidden="true">
+            <div class="spinner" role="status" aria-label="Loading"></div>
+        </div>
         <header>
             <h1>📊 Trading Dashboard</h1>
             <p>MT4 Analytics & Performance Tracking</p>
@@ -384,28 +420,46 @@
         }
         
         // Load and display data
+        // Show/hide global loading overlay
+        function showGlobalLoading() {
+            const el = document.getElementById('globalLoading');
+            if (el) {
+                el.classList.add('visible');
+                el.setAttribute('aria-hidden', 'false');
+            }
+        }
+
+        function hideGlobalLoading() {
+            const el = document.getElementById('globalLoading');
+            if (el) {
+                el.classList.remove('visible');
+                el.setAttribute('aria-hidden', 'true');
+            }
+        }
+
         async function loadData(fromDate = null, toDate = null) {
+            showGlobalLoading();
             try {
                 const params = new URLSearchParams();
                 if (fromDate) params.append('from_date', fromDate);
                 if (toDate) params.append('to_date', toDate);
-                
+
                 // Fetch summary
                 const summaryUrl = `${API_BASE}/summary?${params.toString()}`;
                 const summaryRes = await fetch(summaryUrl);
                 const summaryData = await summaryRes.json();
-                
+
                 if (summaryData.success) {
                     const summary = summaryData.data;
                     updateStats(summary);
                     updatePeriodInfo(summary.period);
                 }
-                
+
                 // Fetch trades
                 const tradesUrl = `${API_BASE}/trades?${params.toString()}`;
                 const tradesRes = await fetch(tradesUrl);
                 const tradesData = await tradesRes.json();
-                
+
                 if (tradesData.success) {
                     updateTradesTable(tradesData.data);
                 }
@@ -413,6 +467,9 @@
                 console.error('Error loading data:', error);
                 document.getElementById('tradesContainer').innerHTML = 
                     '<div class="no-data">Error loading data. Please try again.</div>';
+            } finally {
+                // Small delay so very fast loads don't appear janky
+                setTimeout(hideGlobalLoading, 200);
             }
         }
         
